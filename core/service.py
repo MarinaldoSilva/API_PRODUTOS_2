@@ -51,7 +51,6 @@ class ProdutoService:
 
         return seri.data, None
         
-        
     @staticmethod
     def update_produto(pk, data, partial=False):
         try:
