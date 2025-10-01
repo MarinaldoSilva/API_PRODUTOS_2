@@ -15,9 +15,13 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     #apps
     "core",
+    "users",
 
     #libs externals
     "rest_framework",
+
+    #app tpken
+    "rest_framework.authtoken",
 
     "django.contrib.admin",
     "django.contrib.auth",
@@ -26,6 +30,18 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication', 
+        # Ativa a autenticação por Token
+        #'rest_framework.authentication.SessionAuthentication', #Para usar o browsable API com login/logout
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated', 
+        #Apenas usuários autenticados podem acessar por padrão
+    ]
+}
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -56,7 +72,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-
+AUTH_USER_MODEL = 'users.User'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
