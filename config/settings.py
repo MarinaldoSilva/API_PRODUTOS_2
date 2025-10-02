@@ -20,7 +20,7 @@ INSTALLED_APPS = [
     #libs externals
     "rest_framework",
 
-    #app tpken
+    #app token
     "rest_framework.authtoken",
 
     "django.contrib.admin",
