@@ -2,6 +2,9 @@ from .models import Produto
 from .serializer import ProdutoSerializer
 from django.utils import timezone
 
+MSG_ERROR = "Produto não existe ou sem permissão de visualização"
+error = "Errors"
+
 class ProdutoService:
 
     @staticmethod
@@ -25,13 +28,16 @@ class ProdutoService:
             """Como dic em Py são mutáveis, quando o _verifica_estoque altera validated_data, ele altera a mesma posição memória de dados que está dentro do serializer. A alteração é feita diretamente no objeto original."""
 
     @staticmethod
-    def get_all_produtos():
-        produto = Produto.objects.all()
-        seri =ProdutoSerializer(produto, many=True)
-        return seri.data, None
+    def get_all_produtos_user(user):
+        try:
+            produto = Produto.objects.filter(dono=user)
+            seri =ProdutoSerializer(produto, many=True)
+            return seri.data, None
+        except Produto.DoesNotExist:
+            return None, {error:MSG_ERROR}
     
     @staticmethod
-    def create_produto(data):
+    def create_produto(data,user):
         seri = ProdutoSerializer(data=data)
         if not seri.is_valid():
             return None, seri.errors
@@ -47,16 +53,16 @@ class ProdutoService:
         dados_validados = seri.validated_data
 
         ProdutoService._verifica_estoque(dados_validados)
-        seri.save()
+        seri.save(dono=user)
 
         return seri.data, None
         
     @staticmethod
-    def update_produto(pk, data, partial=False):
+    def update_produto_user(pk, data, user, partial=False):
         try:
-            produto = Produto.objects.get(pk=pk)
+            produto = Produto.objects.get(pk=pk, dono=user)
         except Produto.DoesNotExist:
-            return None, {"errors":"Produto não localizado"}
+            return None, {error:MSG_ERROR}
         seri = ProdutoSerializer(instance=produto, data=data, partial=partial)
 
         if seri.is_valid():
@@ -66,8 +72,8 @@ class ProdutoService:
                 return None, erro_preco
             
             erro_data = ProdutoService._data_validade(seri)
-            if erro_preco:
-                return None, erro_preco
+            if erro_data:
+                return None, erro_data
             
             dados_validos = seri.validated_data
             ProdutoService._verifica_estoque(dados_validos)
@@ -76,23 +82,23 @@ class ProdutoService:
         return None, seri.errors
     
     @staticmethod
-    def get_pk_produto(pk):
+    def get_pk_produto_user(pk, user):
         try:
-            produto = Produto.objects.get(pk=pk)
+            produto = Produto.objects.get(pk=pk, dono=user)
             seri = ProdutoSerializer(produto)
             return seri.data, None
         except Produto.DoesNotExist:
-            return None, {"errors":"Produto não localizado"}
+            return None, {error:MSG_ERROR}
         
 
     @staticmethod
-    def deletar_produto(pk):
+    def deletar_produto_user(pk, user):
         try:
-            produto = Produto.objects.get(pk=pk)
+            produto = Produto.objects.get(pk=pk, dono=user)
             produto.delete()
             return True, None
         except Produto.DoesNotExist:
-            return True, {"errors":"Produto não localizado"}
+            return True, {error:MSG_ERROR}
     
 
         
