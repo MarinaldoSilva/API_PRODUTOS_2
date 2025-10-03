@@ -2,103 +2,102 @@ from .models import Produto
 from .serializer import ProdutoSerializer
 from django.utils import timezone
 
-MSG_ERROR = "Produto não existe ou sem permissão de visualização"
-error = "Errors"
+
+MSG_PRODUTO_NAO_LOCALIZADO  = "Produto não existe ou sem permissão de visualização"
+error = "error"
 
 class ProdutoService:
+    """
+    Toda vez que um ProdutoService é instanciado o valor de user que vem da request, esse valor é salvo no self.user, com isso precisamos usar o self.user ao inves do user da instancia.
+    """
+    def __init__(self, user):
+        self.user = user #o valor de user instanciado esta na variavel user
 
-    @staticmethod
-    def _validar_preco(serializer):
+    def _validar_preco(self, serializer):
         preco_item = serializer.validated_data.get('preco')
         if preco_item is not None and preco_item <= 0:
             return {'preco':['Preço não pode ser zero ou negativo']}
         return None
     
-    @staticmethod
-    def _data_validade(serializer):
+    def _data_validade(self, serializer):
         data_validade = serializer.validated_data.get('data_validade')
         if data_validade and data_validade < timezone.localdate():
             return {'data_validade':'[Validade do produto invalida.]'}
         return None
     
-    @staticmethod
-    def _verifica_estoque(validated_data):
+    def _verifica_estoque(self, validated_data):
         if 'estoque' in validated_data and validated_data['estoque'] == 0:
             validated_data['disponivel'] = False
             """Como dic em Py são mutáveis, quando o _verifica_estoque altera validated_data, ele altera a mesma posição memória de dados que está dentro do serializer. A alteração é feita diretamente no objeto original."""
 
-    @staticmethod
-    def get_all_produtos_user(user):
+
+
+    def get_all_produtos_user(self):
         try:
-            produto = Produto.objects.filter(dono=user)
-            seri =ProdutoSerializer(produto, many=True)
-            return seri.data, None
+            produto = Produto.objects.filter(dono=self.user)
+            serializer =ProdutoSerializer(produto, many=True)
+            return serializer.data, None
         except Produto.DoesNotExist:
-            return None, {error:MSG_ERROR}
-    
-    @staticmethod
-    def create_produto(data,user):
-        seri = ProdutoSerializer(data=data)
-        if not seri.is_valid():
-            return None, seri.errors
+            return None, {error:MSG_PRODUTO_NAO_LOCALIZADO }
+
+    def create_produto(self, data:dict):
+        serializer = ProdutoSerializer(data=data)
+        if not serializer.is_valid():
+            return None, {error:serializer.errors}
         
-        erro_preco = ProdutoService._validar_preco(seri)
+        erro_preco = self._validar_preco(serializer)
         if erro_preco:
             return None, erro_preco
             
-        erro_data = ProdutoService._data_validade(seri)
+        erro_data = self._data_validade(serializer)
         if erro_data:
             return None, erro_data 
             
-        dados_validados = seri.validated_data
+        dados_validados = serializer.validated_data
 
-        ProdutoService._verifica_estoque(dados_validados)
-        seri.save(dono=user)
+        self._verifica_estoque(dados_validados)
+        serializer.save(dono=self.user)
 
-        return seri.data, None
+        return serializer.data, None
         
-    @staticmethod
-    def update_produto_user(pk, data, user, partial=False):
+    def update_produto_user(self, pk:int, data:dict, partial:bool =False):
         try:
-            produto = Produto.objects.get(pk=pk, dono=user)
+            produto = Produto.objects.get(pk=pk, dono=self.user)
         except Produto.DoesNotExist:
-            return None, {error:MSG_ERROR}
-        seri = ProdutoSerializer(instance=produto, data=data, partial=partial)
+            return None, {error:MSG_PRODUTO_NAO_LOCALIZADO }
+        serializer = ProdutoSerializer(instance=produto, data=data, partial=partial)
 
-        if seri.is_valid():
+        if serializer.is_valid():
 
-            erro_preco = ProdutoService._validar_preco(seri)
+            erro_preco = self._validar_preco(serializer)
             if erro_preco:
                 return None, erro_preco
             
-            erro_data = ProdutoService._data_validade(seri)
+            erro_data = self._data_validade(serializer)
             if erro_data:
                 return None, erro_data
             
-            dados_validos = seri.validated_data
-            ProdutoService._verifica_estoque(dados_validos)
-            seri.save()
-            return seri.data, None
-        return None, seri.errors
+            dados_validos = serializer.validated_data
+            self._verifica_estoque(dados_validos)
+            serializer.save()
+            return serializer.data, None
+        return None, serializer.errors
     
-    @staticmethod
-    def get_pk_produto_user(pk, user):
+    def get_pk_produto_user(self, pk):
         try:
-            produto = Produto.objects.get(pk=pk, dono=user)
-            seri = ProdutoSerializer(produto)
-            return seri.data, None
+            produto = Produto.objects.get(pk=pk, dono=self.user)
+            serializer = ProdutoSerializer(produto)
+            return serializer.data, None
         except Produto.DoesNotExist:
-            return None, {error:MSG_ERROR}
+            return None, {error:MSG_PRODUTO_NAO_LOCALIZADO}
         
-
-    @staticmethod
-    def deletar_produto_user(pk, user):
+    def deletar_produto_user(self, pk):
         try:
-            produto = Produto.objects.get(pk=pk, dono=user)
+            produto = Produto.objects.get(pk=pk, dono=self.user)
             produto.delete()
             return True, None
         except Produto.DoesNotExist:
-            return True, {error:MSG_ERROR}
+            return False, {error:MSG_PRODUTO_NAO_LOCALIZADO }
     
 
         
