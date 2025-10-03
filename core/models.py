@@ -24,7 +24,7 @@ class Produto(models.Model):
     def __str__(self):
         return f"O produto '{self.nome }' tem estoque de {self.estoque}"
     
-    def is_available(self):
+    def estoque_disponivel(self):
         return self.estoque > 0
 
 
