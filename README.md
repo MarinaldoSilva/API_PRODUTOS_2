@@ -1,6 +1,6 @@
-# Sistema de gestão de produtos 🍶
+# Controle de estoque e produtos
 
-Sistema insperado em um cadastro de itens de supermercado para gestão de itens/produtos cadastrados, servindo como base para um sistema de inventário de itens.
+Sistema inspirado em um cadastro de itens de supermercado para controle de itens/produtos cadastrados no estoque, servindo como base para um sistema de `inventário` de itens.
 Nesse cenário o gerente tem controle total sobre tudo que é cadastrado, atualizado, listado e deletado.
 
 O projeto tem como base 2 dos principios do solid:
